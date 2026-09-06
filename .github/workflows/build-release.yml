@@ -16,9 +16,19 @@ jobs:
       - name: Extract project source
         run: |
           unzip -o fotocaap-app.zip -d extracted_src
-          # انتقال تمام فایل‌ها از پوشه استخراج شده به پوشه جاری اکشن
-          cp -rf extracted_src/fotocaap-app/* . || true
-          cp -rf extracted_src/fotocaap-app/.* . || true
+          
+          # پیدا کردن مسیر دقیق پوشه‌ای که فایل gradlew در آن قرار دارد
+          GRADLEW_DIR=$(find extracted_src -name "gradlew" -exec dirname {} \;)
+          echo "Found gradlew in directory: $GRADLEW_DIR"
+          
+          if [ -z "$GRADLEW_DIR" ]; then
+            echo "Error: gradlew could not be found anywhere in the zip file!"
+            exit 1
+          fi
+          
+          # انتقال تمام محتویات پوشه اصلی پروژه به دایرکتوری جاری اکشن
+          cp -rf "$GRADLEW_DIR"/* . || true
+          cp -rf "$GRADLEW_DIR"/.* . || true
           rm -rf extracted_src
 
       - name: Set up JDK 17
@@ -36,11 +46,10 @@ jobs:
 
       - name: Grant execute permission for gradlew
         run: |
-          # مطمئن شدن از وجود فایل gradlew و دادن دسترسی اجرایی به آن
           if [ -f "gradlew" ]; then
             chmod +x gradlew
           else
-            echo "Error: gradlew not found in root directory!"
+            echo "Error: gradlew was not copied correctly to root directory!"
             exit 1
           fi
 
