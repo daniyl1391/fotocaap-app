@@ -16,7 +16,9 @@ jobs:
       - name: Extract project source
         run: |
           unzip -o fotocaap-app.zip -d extracted_src
-          cp -rf extracted_src/fotocaap-app/. .
+          # انتقال تمام فایل‌ها از پوشه استخراج شده به پوشه جاری اکشن
+          cp -rf extracted_src/fotocaap-app/* . || true
+          cp -rf extracted_src/fotocaap-app/.* . || true
           rm -rf extracted_src
 
       - name: Set up JDK 17
@@ -33,7 +35,14 @@ jobs:
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > release.keystore
 
       - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
+        run: |
+          # مطمئن شدن از وجود فایل gradlew و دادن دسترسی اجرایی به آن
+          if [ -f "gradlew" ]; then
+            chmod +x gradlew
+          else
+            echo "Error: gradlew not found in root directory!"
+            exit 1
+          fi
 
       - name: Build Signed Release APK & AAB
         env:
